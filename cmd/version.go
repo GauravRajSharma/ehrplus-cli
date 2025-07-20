@@ -29,7 +29,7 @@ to quickly create a Cobra application.`,
 		cli, _ := client.NewClientWithOpts(client.FromEnv)
 		containers, _ := cli.ContainerList(context.Background(), container.ListOptions{})
 
-		p := tea.NewProgram(model{
+		p := tea.NewProgram(containerModel{
 			choices:  containers,
 			selected: make(map[int]struct{}),
 		})
@@ -54,18 +54,18 @@ func init() {
 	// versionCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-type model struct {
+type containerModel struct {
 	choices  []types.Container // items on the to-do list
 	cursor   int               // which to-do list item our cursor is pointing at
 	selected map[int]struct{}  // which to-do items are selected
 }
 
-func (m model) Init() tea.Cmd {
+func (m containerModel) Init() tea.Cmd {
 	// Just return `nil`, which means "no I/O right now, please."
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m containerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	// Is it a key press?
@@ -107,9 +107,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m containerModel) View() string {
 	// The header
-	s := "What should we buy at the market?\n\n"
+	s := "Docker Containers:\n\n"
 
 	// Iterate over our choices
 	for i, choice := range m.choices {
@@ -127,7 +127,11 @@ func (m model) View() string {
 		}
 
 		// Render the row
-		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
+		containerName := choice.ID[:12] // Default to container ID
+		if len(choice.Names) > 0 {
+			containerName = choice.Names[0] // Use first name if available
+		}
+		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, containerName)
 	}
 
 	// The footer
